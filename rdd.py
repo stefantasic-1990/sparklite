@@ -41,7 +41,19 @@ class RDD:
         pass
 
     def lineage_edges(self) -> list[tuple[str, str, str]]:
-        pass
+        visited = set()
+        edges = []
+
+        def dfw(rdd):
+            visited.add(rdd)
+            if rdd.parents:
+                for parent in rdd.parents:
+                    edges.append((parent.id, rdd.id, rdd.op))
+                    if parent not in visited:
+                        dfw(parent)
+        dfw(self)
+
+        return edges
 
     def print_lineage(self) -> str:
         pass
