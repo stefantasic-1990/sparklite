@@ -51,8 +51,8 @@ class RDD:
                     edges.append((parent.id, rdd.id, rdd.op))
                     if parent not in visited:
                         dfw(parent)
+                        
         dfw(self)
-
         return edges
 
     def print_lineage(self) -> str:
