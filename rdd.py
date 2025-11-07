@@ -8,6 +8,11 @@ class RDD:
     __slots__ = ('id', 'op', 'parents', 'num_of_parts', '_locked')
 
     def __init__(self, id: str, op: str, parents: tuple, num_of_parts: int):
+        if not isinstance(parents, tuple):
+            raise ValueError("Parents attribute must be a tuple.")
+        if not num_of_parts >= 1:
+            raise ValueError("Number of partitions attribute must be greater or equal to 1.")
+
         object.__setattr__(self, 'id', id)
         object.__setattr__(self, 'op', op)
         object.__setattr__(self, 'parents', parents)
@@ -20,25 +25,25 @@ class RDD:
         object.__setattr__(self, key, value)
 
     def compute(self, part_index: int) -> Iterator[Any]:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def map(self, func: Callable[[T], U], name: str | None = None) -> RDD[U]:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def filter(self, predicate: Callable[[T], bool], name: str | None = None) -> RDD[T]:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def flatMap(self, f: Callable[[T], Iterable[U]], name: str | None = None) -> RDD[U]:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def collect(self) -> list[T]:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def count(self) -> int:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def reduce(self, f: Callable[[T, T], T]) -> T:
-        pass
+        NotImplementedError("Method not yet implemented.")
 
     def lineage_edges(self) -> list[tuple[str, str, str]]:
         visited = set()
