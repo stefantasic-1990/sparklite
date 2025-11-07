@@ -5,13 +5,13 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 class RDD:
-    __slots__ = ('id', 'op', 'parents', 'num_of_part', '_locked')
+    __slots__ = ('id', 'op', 'parents', 'num_of_parts', '_locked')
 
-    def __init__(self, id: str, op: str, parents: tuple, num_of_part: int):
+    def __init__(self, id: str, op: str, parents: tuple, num_of_parts: int):
         object.__setattr__(self, 'id', id)
         object.__setattr__(self, 'op', op)
         object.__setattr__(self, 'parents', parents)
-        object.__setattr__(self, 'num_of_part', num_of_part)
+        object.__setattr__(self, 'num_of_parts', num_of_parts)
         object.__setattr__(self, '_locked', True)
 
     def __setattr__(self, key, value):
@@ -51,9 +51,25 @@ class RDD:
                     edges.append((parent.id, rdd.id, rdd.op))
                     if parent not in visited:
                         dfw(parent)
-                        
-        dfw(self)
+
+        dfw(rdd=self)
         return edges
 
     def print_lineage(self) -> str:
-        pass
+        visited = set()
+        lines = []
+
+        def dfw(rdd, depth):
+            line = f"{'  '*depth}[{rdd.id[:8]}] {rdd.op} (parts={rdd.num_of_parts})"
+            if rdd in visited:
+                line += " (shared)"
+                lines.append(line)
+                return
+            lines.append(line)
+            visited.add(rdd)
+            if rdd.parents:
+                for parent in rdd.parents:
+                    dfw(parent, depth+1)
+                        
+        dfw(rdd=self, depth=0)
+        return "\n".join(lines)
