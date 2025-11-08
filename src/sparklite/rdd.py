@@ -1,5 +1,5 @@
-from typing import Any, Callable, Iterable, Iterator, TypeVar
 from __future__ import annotations
+from typing import Any, Callable, Iterable, Iterator, TypeVar
 
 T = TypeVar("T")
 U = TypeVar("U")

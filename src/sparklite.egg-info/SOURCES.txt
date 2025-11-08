@@ -1,0 +1,9 @@
+README.md
+pyproject.toml
+src/sparklite/__init__.py
+src/sparklite/rdd.py
+src/sparklite.egg-info/PKG-INFO
+src/sparklite.egg-info/SOURCES.txt
+src/sparklite.egg-info/dependency_links.txt
+src/sparklite.egg-info/top_level.txt
+tests/test_rdd.py
