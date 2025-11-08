@@ -45,7 +45,7 @@ class RDD:
     def reduce(self, f: Callable[[T, T], T]) -> T:
         NotImplementedError("Method not yet implemented.")
 
-    def lineage_edges(self) -> list[tuple[str, str, str]]:
+    def get_lineage_edges(self) -> list[tuple[str, str, str]]:
         visited = set()
         edges = []
 
@@ -60,7 +60,7 @@ class RDD:
         dfw(rdd=self)
         return edges
 
-    def print_lineage(self) -> str:
+    def get_ascii_lineage(self) -> str:
         visited = set()
         lines = []
 
