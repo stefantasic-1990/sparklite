@@ -95,4 +95,6 @@ class ParallelCollectionRDD(RDD):
         return tuple(tuple(part) for part in parts)
 
     def compute(self, part_index: int) -> Iterator[Any]:
-        pass
+        if not part_index >= 1 and not part_index <= num_of_parts:
+            raise ValueError("Invalid partition index provided.")
+        return iter(self._parts[part_index])
