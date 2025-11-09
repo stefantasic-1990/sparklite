@@ -23,3 +23,6 @@ def test_indentation_and_parts_tag_consistency():
     assert lineage_lines[0].startswith(""), "Depth 0 should start with 0 spaces."
     assert lineage_lines[1].startswith("  "), "Depth 1 should start with 2 spaces."
     assert lineage_lines[2].startswith("    "), "Depth 2 should start with 4 spaces."
+
+    for line in lineage_lines:
+        assert re.search(r"\(parts=\d+\)", line)
