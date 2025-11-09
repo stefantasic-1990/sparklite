@@ -6,17 +6,18 @@ T = TypeVar("T")
 U = TypeVar("U")
 
 class RDD:
-    __slots__ = ('id', 'op', 'parents', 'num_of_parts', '_locked')
-    def __init__(self, op: str, parents: tuple, num_of_parts: int):
+    """RDD abstract base class."""
+    __slots__ = ('id', 'op', 'parents', 'num_of_partitions', '_locked')
+    def __init__(self, op: str, parents: tuple, num_of_partitions: int):
         if not isinstance(parents, tuple):
             raise ValueError("Parents attribute must be a tuple.")
-        if not num_of_parts >= 1:
+        if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
 
         object.__setattr__(self, 'id', uuid.uuid4().hex)
         object.__setattr__(self, 'op', op)
         object.__setattr__(self, 'parents', parents)
-        object.__setattr__(self, 'num_of_parts', num_of_parts)
+        object.__setattr__(self, 'num_of_partitions', num_of_partitions)
         object.__setattr__(self, '_locked', True)
 
     def __setattr__(self, key, value):
@@ -24,7 +25,7 @@ class RDD:
             raise AttributeError("An RDD is an immutable object.")
         object.__setattr__(self, key, value)
 
-    def compute(self, part_index: int) -> Iterator[Any]:
+    def compute(self, partition_index: int) -> Iterator[Any]:
         NotImplementedError("Method not yet implemented.")
 
     def map(self, func: Callable[[T], U], name: str | None = None) -> RDD[U]:
@@ -65,7 +66,7 @@ class RDD:
         lines = []
 
         def dfw(rdd, depth):
-            line = f"{'  '*depth}[{rdd.id[:16]}] {rdd.op} (parts={rdd.num_of_parts})"
+            line = f"{'  '*depth}[{rdd.id[:16]}] {rdd.op} (partitions={rdd.num_of_partitions})"
             if rdd in visited:
                 line += " (shared)"
                 lines.append(line)
@@ -80,21 +81,25 @@ class RDD:
         return "\n".join(lines)
 
 class ParallelCollectionRDD(RDD):
-    def __init__(self, data: Iterable[T], num_of_parts: int):
-        if not num_of_parts >= 1:
+    """Leaf RDD for holding in-memory data split deterministically into fixed partitions."""
+    def __init__(self, data: Iterable[T], num_of_partitions: int):
+        if not hasattr(data, '__iter__'):
+            raise TypeError("ParallelCollectionRDD requires an iterable data object.")
+        if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
-        _parts = self._create_parts(data, num_of_parts)
-        object.__setattr__(self, '_parts', _parts)
-        super().__init__(op="ParallelCollection", parents=(), num_of_parts=num_of_parts)
+        _partitions = self._create_partitions(data, num_of_partitions)
+        object.__setattr__(self, '_partitions', _partitions)
+        super().__init__(op="ParallelCollection", parents=(), num_of_partitions=num_of_partitions)
 
-    def _create_parts(data: Iterable[T], num_of_parts: int) -> tuple[tuple[T, ...], ...]:
-        parts = tuple([] for _ in range(num_of_parts))
+    @staticmethod
+    def _create_partitions(data: Iterable[T], num_of_partitions: int) -> tuple[tuple[T, ...], ...]:
+        partitions = tuple([] for _ in range(num_of_partitions))
         for index, element in enumerate(data):
-            part_index = index % num_of_parts
-            parts[part_index].append(element)
-        return tuple(tuple(part) for part in parts)
+            partition_index = index % num_of_partitions
+            partitions[partition_index].append(element)
+        return tuple(tuple(part) for part in partitions)
 
-    def compute(self, part_index: int) -> Iterator[Any]:
-        if not part_index >= 1 and not part_index <= num_of_parts:
-            raise ValueError("Invalid partition index provided.")
-        return iter(self._parts[part_index])
+    def compute(self, partition_index: int) -> Iterator[T]:
+        if not (0 <= partition_index < self.num_of_partitions):
+            raise AssertionError(f"Invalid partition index for RDD {self.id}.")
+        return iter(self._partitions[partition_index])
