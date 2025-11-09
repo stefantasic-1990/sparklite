@@ -7,7 +7,6 @@ U = TypeVar("U")
 
 class RDD:
     __slots__ = ('id', 'op', 'parents', 'num_of_parts', '_locked')
-
     def __init__(self, op: str, parents: tuple, num_of_parts: int):
         if not isinstance(parents, tuple):
             raise ValueError("Parents attribute must be a tuple.")
@@ -89,7 +88,11 @@ class ParallelCollectionRDD(RDD):
         super().__init__(op="ParallelCollection", parents=(), num_of_parts=num_of_parts)
 
     def _create_parts(data: Iterable[T], num_of_parts: int) -> tuple[tuple[T, ...], ...]:
-        pass
+        parts = tuple([] for _ in range(num_of_parts))
+        for index, element in enumerate(data):
+            part_index = index % num_of_parts
+            parts[part_index].append(element)
+        return tuple(tuple(part) for part in parts)
 
     def compute(self, part_index: int) -> Iterator[Any]:
         pass
