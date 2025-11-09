@@ -27,7 +27,7 @@ def test_indentation_and_parts_tag_consistency():
     for line in lineage_lines:
         assert re.search(r"\(parts=\d+\)", line)
 
-def test_lineage_shared_tag_correctness():
+def test_shared_tag_correctness():
     """ASCII lineage output shared tag applied for every repeated node encounter except first."""
     rdd1 = DummyRDD()
     rdd2 = DummyRDD(parents=(rdd1,))
@@ -38,7 +38,7 @@ def test_lineage_shared_tag_correctness():
 
     assert lineage_lines.count("(shared)") == 2, "Incorrect shared node tagging logic."
 
-def test_lineage_edges_determinism():
+def test_edges_output_determinism():
     """Lineage edges output list must produce deterministic output."""
     rdd1 = DummyRDD()
     rdd2 = DummyRDD()
