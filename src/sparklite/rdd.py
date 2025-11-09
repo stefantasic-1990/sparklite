@@ -97,7 +97,7 @@ class ParallelCollectionRDD(RDD):
         for index, element in enumerate(data):
             partition_index = index % num_of_partitions
             partitions[partition_index].append(element)
-        return tuple(tuple(part) for part in partitions)
+        return tuple(tuple(partition) for partition in partitions)
 
     def compute(self, partition_index: int) -> Iterator[T]:
         if not (0 <= partition_index < self.num_of_partitions):

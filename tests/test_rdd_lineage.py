@@ -2,8 +2,8 @@ import re
 from sparklite.rdd import RDD
 
 class DummyRDD(RDD):
-    def __init__(self, op="Dummy", parents=(), num_of_parts=1):
-        super().__init__(op=op, parents=parents, num_of_parts=num_of_parts)
+    def __init__(self, op="Dummy", parents=(), num_of_partitions=1):
+        super().__init__(op=op, parents=parents, num_of_partitions=num_of_partitions)
 
 def test_short_id_length_and_format():
     """First 16 characters of shortened RDD ID appear within lineage output and are lowercase hex."""
@@ -13,11 +13,11 @@ def test_short_id_length_and_format():
     assert len(short_id) == 16, "Short RDD ID must be 16 characters."
     assert all(c in "0123456789abcdef" for c in short_id), "Short RDD ID must be lowercase hex."
 
-def test_indentation_and_parts_tag_consistency():
-    """Indentation grows by 2 spaces per depth, every line shows (parts=n)."""
-    rdd1 = DummyRDD(num_of_parts=1)
-    rdd2 = DummyRDD(parents=(rdd1,), num_of_parts=1)
-    rdd3 = DummyRDD(parents=(rdd2,), num_of_parts=2)
+def test_indentation_and_partitions_tag_consistency():
+    """Indentation grows by 2 spaces per depth, every line shows (partitions=n)."""
+    rdd1 = DummyRDD(num_of_partitions=1)
+    rdd2 = DummyRDD(parents=(rdd1,), num_of_partitions=1)
+    rdd3 = DummyRDD(parents=(rdd2,), num_of_partitions=2)
     lineage_lines = rdd3.get_ascii_lineage().splitlines()
 
     assert lineage_lines[0].startswith(""), "Depth 0 should start with 0 spaces."
@@ -25,7 +25,7 @@ def test_indentation_and_parts_tag_consistency():
     assert lineage_lines[2].startswith("    "), "Depth 2 should start with 4 spaces."
 
     for line in lineage_lines:
-        assert re.search(r"\(parts=\d+\)", line)
+        assert re.search(r"\(partitions=\d+\)", line)
 
 def test_shared_tag_correctness():
     """ASCII lineage output shared tag applied for every repeated node encounter except first."""
