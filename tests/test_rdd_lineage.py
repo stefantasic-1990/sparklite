@@ -26,3 +26,14 @@ def test_indentation_and_parts_tag_consistency():
 
     for line in lineage_lines:
         assert re.search(r"\(parts=\d+\)", line)
+
+def test_lineage_edges_determinism():
+    """Lineage edges output list must produce deterministic output."""
+    rdd1 = DummyRDD()
+    rdd2 = DummyRDD()
+    rdd3 = DummyRDD(parents=(rdd1, rdd2))
+    lineage_edges_1 = rdd3.get_lineage_edges()
+    lineage_edges_2 = rdd3.get_lineage_edges()
+
+    assert lineage_edges_1 == lineage_edges_2, "Lineage edges order must remain deterministic across calls."
+
