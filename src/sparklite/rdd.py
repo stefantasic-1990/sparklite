@@ -1,4 +1,5 @@
 from __future__ import annotations
+import uuid
 from typing import Any, Callable, Iterable, Iterator, TypeVar
 
 T = TypeVar("T")
@@ -7,13 +8,13 @@ U = TypeVar("U")
 class RDD:
     __slots__ = ('id', 'op', 'parents', 'num_of_parts', '_locked')
 
-    def __init__(self, id: str, op: str, parents: tuple, num_of_parts: int):
+    def __init__(self, op: str, parents: tuple, num_of_parts: int):
         if not isinstance(parents, tuple):
             raise ValueError("Parents attribute must be a tuple.")
         if not num_of_parts >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
 
-        object.__setattr__(self, 'id', id)
+        object.__setattr__(self, 'id', uuid.uuid4().hex)
         object.__setattr__(self, 'op', op)
         object.__setattr__(self, 'parents', parents)
         object.__setattr__(self, 'num_of_parts', num_of_parts)
@@ -65,7 +66,7 @@ class RDD:
         lines = []
 
         def dfw(rdd, depth):
-            line = f"{'  '*depth}[{rdd.id[:8]}] {rdd.op} (parts={rdd.num_of_parts})"
+            line = f"{'  '*depth}[{rdd.id[:16]}] {rdd.op} (parts={rdd.num_of_parts})"
             if rdd in visited:
                 line += " (shared)"
                 lines.append(line)
