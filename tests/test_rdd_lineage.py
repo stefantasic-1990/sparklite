@@ -15,10 +15,10 @@ def test_short_id_length_and_format():
 
 def test_indentation_and_parts_tag_consistency():
     """Indentation grows by 2 spaces per depth, every line shows (parts=n)."""
-    rdd = DummyRDD(num_of_parts=1)
-    rdd = DummyRDD(parents=(rdd,), num_of_parts=1)
-    rdd = DummyRDD(parents=(rdd,), num_of_parts=2)
-    lineage_lines = rdd.get_ascii_lineage().splitlines()
+    rdd1 = DummyRDD(num_of_parts=1)
+    rdd2 = DummyRDD(parents=(rdd1,), num_of_parts=1)
+    rdd3 = DummyRDD(parents=(rdd2,), num_of_parts=2)
+    lineage_lines = rdd3.get_ascii_lineage().splitlines()
 
     assert lineage_lines[0].startswith(""), "Depth 0 should start with 0 spaces."
     assert lineage_lines[1].startswith("  "), "Depth 1 should start with 2 spaces."
