@@ -2,7 +2,7 @@ import re
 from sparklite.rdd import RDD
 
 class DummyRDD(RDD):
-    def __init__(self, op="dummy_op", parents=(), num_of_parts=1):
+    def __init__(self, op="Dummy", parents=(), num_of_parts=1):
         super().__init__(op=op, parents=parents, num_of_parts=num_of_parts)
 
 def test_short_id_length_and_format():

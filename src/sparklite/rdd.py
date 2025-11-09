@@ -79,3 +79,17 @@ class RDD:
                         
         dfw(rdd=self, depth=0)
         return "\n".join(lines)
+
+class ParallelCollectionRDD(RDD):
+    def __init__(self, data: Iterable[T], num_of_parts: int):
+        if not num_of_parts >= 1:
+            raise ValueError("Number of partitions attribute must be greater or equal to 1.")
+        _parts = self._create_parts(data, num_of_parts)
+        object.__setattr__(self, '_parts', _parts)
+        super().__init__(op="ParallelCollection", parents=(), num_of_parts=num_of_parts)
+
+    def _create_parts(data: Iterable[T], num_of_parts: int) -> tuple[tuple[T, ...], ...]:
+        pass
+
+    def compute(self, part_index: int) -> Iterator[Any]:
+        pass
