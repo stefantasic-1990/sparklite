@@ -1,5 +1,6 @@
 from __future__ import annotations
 import uuid
+from collections.abc import Iterable
 from typing import Any, Callable, Iterable, Iterator, TypeVar
 
 T = TypeVar("T")
@@ -83,7 +84,7 @@ class RDD:
 class ParallelCollectionRDD(RDD):
     """Leaf RDD for holding in-memory data split deterministically into fixed partitions."""
     def __init__(self, data: Iterable[T], num_of_partitions: int):
-        if not hasattr(data, '__iter__'):
+        if not isinstance(data, Iterable):
             raise TypeError("ParallelCollectionRDD requires an iterable data object.")
         if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
@@ -93,7 +94,7 @@ class ParallelCollectionRDD(RDD):
 
     @staticmethod
     def _create_partitions(data: Iterable[T], num_of_partitions: int) -> tuple[tuple[T, ...], ...]:
-        partitions = tuple([] for _ in range(num_of_partitions))
+        partitions = [[] for _ in range(num_of_partitions)]
         for index, element in enumerate(data):
             partition_index = index % num_of_partitions
             partitions[partition_index].append(element)
