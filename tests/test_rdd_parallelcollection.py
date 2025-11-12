@@ -1,3 +1,4 @@
+import pytest
 from sparklite.rdd import ParallelCollectionRDD
 
 def test_partition_distribution_shape_and_determinism():
@@ -49,3 +50,21 @@ def test_eager_generator_consumption_and_persistence():
     rdd2 = ParallelCollectionRDD(data=gen, num_of_partitions=2)
 
     assert list(rdd2.compute(0)) == [], "Consuming the same generator for another RDD should yield no results."
+
+def test_invalid_input_handling():
+    with pytest.raises(TypeError):
+        ParallelCollectionRDD(data=1234, num_of_partitions=1)
+    with pytest.raises(ValueError):
+        ParallelCollectionRDD(data=[1, 2, 3], num_of_partitions=0)
+
+    rdd = ParallelCollectionRDD(data=[1, 2, 3], num_of_partitions=1)
+    with pytest.raises(AssertionError):
+        rdd.compute(-1)
+    with pytest.raises(AssertionError):
+        rdd.compute(2)
+
+    def gen():
+        raise RuntimeError("Explosion.")
+    with pytest.raises(RuntimeError):
+        gen = gen()
+        ParallelCollectionRDD(data=gen, num_of_partitions=1)
