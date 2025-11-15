@@ -83,6 +83,7 @@ class RDD:
 
 class ParallelCollectionRDD(RDD):
     """Leaf RDD for holding in-memory data split deterministically into fixed partitions."""
+    __slots__ = RDD.__slots__ + ('_partitions',)
     def __init__(self, data: Iterable[T], num_of_partitions: int):
         if not isinstance(data, Iterable):
             raise TypeError("ParallelCollectionRDD requires an iterable data object.")
@@ -107,13 +108,14 @@ class ParallelCollectionRDD(RDD):
 
 class MappedRDD(RDD):
     """RDD node that represents a mapping operation."""
+    __slots__ = RDD.__slots__ + ('function',)
     def __init__(self, parents: tuple, function: Callable[[T], U], num_of_partitions: int):
         if not isinstance(parents, tuple):
             raise AssertionError(f"Invalid 'parents' data type passed to RDD.")
         if len(parents) != 1:
             raise AssertionError("MappedRDD must have exactly one parent.")
         if not callable(function):
-            raise TypeError(f"Invalid 'functiontion' data type passed to RDD.")
+            raise TypeError(f"Invalid 'function' data type passed to RDD.")
         object.__setattr__(self, 'function', function)
         super().__init__(op="MappedRDD", parents=parents, num_of_partitions=num_of_partitions)
     
