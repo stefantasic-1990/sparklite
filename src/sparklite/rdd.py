@@ -29,13 +29,13 @@ class RDD:
     def compute(self, partition_index: int) -> Iterator[Any]:
         NotImplementedError("Method not yet implemented.")
 
-    def map(self, func: Callable[[T], U], name: str | None = None) -> RDD[U]:
+    def map(self, function: Callable[[T], U]) -> RDD[U]:
+        return MappedRDD(parents=(self,), function=function, num_of_partitions=self.num_of_partitions)
+
+    def filter(self, predicate: Callable[[T], bool]) -> RDD[T]:
         NotImplementedError("Method not yet implemented.")
 
-    def filter(self, predicate: Callable[[T], bool], name: str | None = None) -> RDD[T]:
-        NotImplementedError("Method not yet implemented.")
-
-    def flatMap(self, f: Callable[[T], Iterable[U]], name: str | None = None) -> RDD[U]:
+    def flatMap(self, f: Callable[[T], Iterable[U]]) -> RDD[U]:
         NotImplementedError("Method not yet implemented.")
 
     def collect(self) -> list[T]:
@@ -104,3 +104,21 @@ class ParallelCollectionRDD(RDD):
         if not (0 <= partition_index < self.num_of_partitions):
             raise AssertionError(f"Invalid partition index for RDD {self.id}.")
         return iter(self._partitions[partition_index])
+
+class MappedRDD(RDD):
+    """RDD node that represents a mapping operation."""
+    def __init__(self, parents: tuple, function: Callable[[T], U], num_of_partitions: int):
+        if not isinstance(parents, tuple):
+            raise AssertionError(f"Invalid 'parents' data type passed to RDD.")
+        if len(parents) != 1:
+            raise AssertionError("MappedRDD must have exactly one parent.")
+        if not callable(function):
+            raise TypeError(f"Invalid 'functiontion' data type passed to RDD.")
+        object.__setattr__(self, 'function', function)
+        super().__init__(op="MappedRDD", parents=parents, num_of_partitions=num_of_partitions)
+    
+    def compute(self, partition_index: int) -> Iterator[U]:
+        if not (0 <= partition_index < self.num_of_partitions):
+            raise AssertionError(f"Invalid partition index for RDD {self.id}.")
+        for x in self.parents[0].compute(partition_index):
+            yield self.function(x)
