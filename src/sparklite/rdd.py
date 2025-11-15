@@ -11,7 +11,7 @@ class RDD:
     __slots__ = ('id', 'op', 'parents', 'num_of_partitions', '_locked')
     def __init__(self, op: str, parents: tuple, num_of_partitions: int):
         if not isinstance(parents, tuple):
-            raise ValueError("Parents attribute must be a tuple.")
+            raise AssertionError(f"Invalid 'parents' data type passed to RDD.")
         if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
 
@@ -33,7 +33,7 @@ class RDD:
         return MappedRDD(parents=(self,), function=function, num_of_partitions=self.num_of_partitions)
 
     def filter(self, predicate: Callable[[T], bool]) -> RDD[T]:
-        NotImplementedError("Method not yet implemented.")
+        return FilteredRDD(parents=(self,), predicate=predicate, num_of_partitions=self.num_of_partitions)
 
     def flatMap(self, f: Callable[[T], Iterable[U]]) -> RDD[U]:
         NotImplementedError("Method not yet implemented.")
@@ -110,8 +110,6 @@ class MappedRDD(RDD):
     """RDD node that represents a mapping operation."""
     __slots__ = RDD.__slots__ + ('function',)
     def __init__(self, parents: tuple, function: Callable[[T], U], num_of_partitions: int):
-        if not isinstance(parents, tuple):
-            raise AssertionError(f"Invalid 'parents' data type passed to RDD.")
         if len(parents) != 1:
             raise AssertionError("MappedRDD must have exactly one parent.")
         if not callable(function):
@@ -124,3 +122,21 @@ class MappedRDD(RDD):
             raise AssertionError(f"Invalid partition index for RDD {self.id}.")
         for x in self.parents[0].compute(partition_index):
             yield self.function(x)
+
+class FilteredRDD(RDD):
+    """RDD node that represents a filtering operation."""
+    __slots__ = RDD.__slots__ + ('predicate',)
+    def __init__(self, parents: tuple, predicate: Callable[[T], bool], num_of_partitions: int):
+        if len(parents) != 1:
+            raise AssertionError("FilteredRDD must have exactly one parent.")
+        if not callable(predicate):
+            raise TypeError(f"Invalid 'predicate' data type passed to RDD.")
+        object.__setattr__(self, 'predicate', predicate)
+        super().__init__(op="FilteredRDD", parents=parents, num_of_partitions=num_of_partitions)
+
+    def compute(self, partition_index: int) -> Iterator[T]:
+        if not (0 <= partition_index < self.num_of_partitions):
+            raise AssertionError(f"Invalid partition index for RDD {self.id}.")
+        for x in self.parents[0].compute(partition_index):
+            if self.predicate(x):
+                yield x
