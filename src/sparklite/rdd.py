@@ -27,7 +27,7 @@ class RDD:
         object.__setattr__(self, key, value)
 
     def compute(self, partition_index: int) -> Iterator[Any]:
-        NotImplementedError("Method not yet implemented.")
+        raise NotImplementedError("Method not yet implemented.")
 
     def map(self, function: Callable[[T], U]) -> RDD[U]:
         return MappedRDD(parents=(self,), function=function, num_of_partitions=self.num_of_partitions)
@@ -36,16 +36,16 @@ class RDD:
         return FilteredRDD(parents=(self,), predicate=predicate, num_of_partitions=self.num_of_partitions)
 
     def flatMap(self, f: Callable[[T], Iterable[U]]) -> RDD[U]:
-        NotImplementedError("Method not yet implemented.")
+        raise NotImplementedError("Method not yet implemented.")
 
     def collect(self) -> list[T]:
-        NotImplementedError("Method not yet implemented.")
+        raise NotImplementedError("Method not yet implemented.")
 
     def count(self) -> int:
-        NotImplementedError("Method not yet implemented.")
+        raise NotImplementedError("Method not yet implemented.")
 
     def reduce(self, f: Callable[[T, T], T]) -> T:
-        NotImplementedError("Method not yet implemented.")
+        raise NotImplementedError("Method not yet implemented.")
 
     def get_lineage_edges(self) -> list[tuple[str, str, str]]:
         visited = set()
@@ -83,14 +83,14 @@ class RDD:
 
 class ParallelCollectionRDD(RDD):
     """Leaf RDD for holding in-memory data split deterministically into fixed partitions."""
-    __slots__ = RDD.__slots__ + ('_partitions',)
+    __slots__ = ('_partitions',)
     def __init__(self, data: Iterable[T], num_of_partitions: int):
         if not isinstance(data, Iterable):
             raise TypeError("ParallelCollectionRDD requires an iterable data object.")
         if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
         _partitions = self._create_partitions(data, num_of_partitions)
-        object.__setattr__(self, '_partitions', _partitions)
+        self._partitions = _partitions
         super().__init__(op="ParallelCollection", parents=(), num_of_partitions=num_of_partitions)
 
     @staticmethod
@@ -108,14 +108,18 @@ class ParallelCollectionRDD(RDD):
 
 class MappedRDD(RDD):
     """RDD node that represents a mapping operation."""
-    __slots__ = RDD.__slots__ + ('function',)
+    __slots__ = ('function',)
     def __init__(self, parents: tuple, function: Callable[[T], U], num_of_partitions: int):
         if len(parents) != 1:
             raise AssertionError("MappedRDD must have exactly one parent.")
+        if not isinstance(parents[0], RDD):
+            raise AssertionError("Parent must be an instance of class RDD.")
         if not callable(function):
             raise TypeError(f"Invalid 'function' data type passed to RDD.")
-        object.__setattr__(self, 'function', function)
-        super().__init__(op="MappedRDD", parents=parents, num_of_partitions=num_of_partitions)
+        if num_of_partitions != parents[0].num_of_partitions:
+            raise AssertionError("MappedRDD must have an identical number of partitions as its parent.")
+        self.function = function
+        super().__init__(op="Map", parents=parents, num_of_partitions=num_of_partitions)
     
     def compute(self, partition_index: int) -> Iterator[U]:
         if not (0 <= partition_index < self.num_of_partitions):
@@ -125,14 +129,18 @@ class MappedRDD(RDD):
 
 class FilteredRDD(RDD):
     """RDD node that represents a filtering operation."""
-    __slots__ = RDD.__slots__ + ('predicate',)
+    __slots__ = ('predicate',)
     def __init__(self, parents: tuple, predicate: Callable[[T], bool], num_of_partitions: int):
         if len(parents) != 1:
             raise AssertionError("FilteredRDD must have exactly one parent.")
+        if not isinstance(parents[0], RDD):
+            raise AssertionError("Parent must be an instance of class RDD.")
         if not callable(predicate):
             raise TypeError(f"Invalid 'predicate' data type passed to RDD.")
-        object.__setattr__(self, 'predicate', predicate)
-        super().__init__(op="FilteredRDD", parents=parents, num_of_partitions=num_of_partitions)
+        if num_of_partitions != parents[0].num_of_partitions:
+            raise AssertionError("FilteredRDD must have an identical number of partitions as its parent.")
+        self.predicate = predicate
+        super().__init__(op="Filter", parents=parents, num_of_partitions=num_of_partitions)
 
     def compute(self, partition_index: int) -> Iterator[T]:
         if not (0 <= partition_index < self.num_of_partitions):
