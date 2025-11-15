@@ -15,11 +15,11 @@ class RDD:
         if not num_of_partitions >= 1:
             raise ValueError("Number of partitions attribute must be greater or equal to 1.")
 
-        object.__setattr__(self, 'id', uuid.uuid4().hex)
-        object.__setattr__(self, 'op', op)
-        object.__setattr__(self, 'parents', parents)
-        object.__setattr__(self, 'num_of_partitions', num_of_partitions)
-        object.__setattr__(self, '_locked', True)
+        self.id = uuid.uuid4().hex
+        self.op = op
+        self.parents = parents
+        self.num_of_partitions = num_of_partitions
+        self._locked = True
 
     def __setattr__(self, key, value):
         if getattr(self, '_locked', False):
